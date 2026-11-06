@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: liftlog-app
+    runtime: python
+    plan: free
+    region: ohio
+    buildCommand: >-
+      python -c "import base64,pathlib; p=pathlib.Path('bundle'); pathlib.Path('source.zip').write_bytes(b''.join(base64.b64decode((p/f'part{i:02}.b64').read_text()) for i in range(7)))" &&
+      python -c "import zipfile; zipfile.ZipFile('source.zip').extractall('.')" &&
+      pip install -r LiftLog/requirements.txt
+    startCommand: cd LiftLog && gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
